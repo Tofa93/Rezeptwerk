@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kuechenkompass | Rezeptsuche</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Kuechenkompass Startseite">
+        <span class="brand-mark">K</span>
+        <span>Kuechenkompass</span>
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a href="index.html">Start</a>
+        <a class="active" href="suche.html">Rezeptsuche</a>
+        <a href="erstellen.html">Rezept erstellen</a>
+      </nav>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-intro">
+        <p class="eyebrow">Rezeptsuche</p>
+        <h1>Finde etwas, das zu deinem Abend passt.</h1>
+      </section>
+
+      <section class="search-layout">
+        <aside class="filters" aria-label="Suchfilter">
+          <label>
+            Suche
+            <input id="searchInput" type="search" placeholder="Zutat, Gericht, Stimmung">
+          </label>
+          <label>
+            Kategorie
+            <select id="categoryFilter">
+              <option value="alle">Alle</option>
+              <option value="Vegetarisch">Vegetarisch</option>
+              <option value="Schnell">Schnell</option>
+              <option value="Familie">Familie</option>
+              <option value="Meal Prep">Meal Prep</option>
+            </select>
+          </label>
+          <label>
+            Max. Zeit
+            <select id="timeFilter">
+              <option value="999">Egal</option>
+              <option value="20">Bis 20 Minuten</option>
+              <option value="35">Bis 35 Minuten</option>
+              <option value="60">Bis 60 Minuten</option>
+            </select>
+          </label>
+        </aside>
+
+        <section>
+          <div class="result-meta">
+            <span id="resultCount">0 Rezepte</span>
+            <button class="text-button" id="resetFilters" type="button">Filter zuruecksetzen</button>
+          </div>
+          <div class="recipe-grid" id="recipeResults"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

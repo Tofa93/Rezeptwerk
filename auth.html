@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kuechenkompass | Anmeldung</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Kuechenkompass Startseite">
+        <span class="brand-mark">K</span>
+        <span>Kuechenkompass</span>
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a href="index.html">Start</a>
+        <a href="suche.html">Rezeptsuche</a>
+        <a href="erstellen.html">Rezept erstellen</a>
+        <a class="active" href="auth.html">Anmelden</a>
+      </nav>
+    </header>
+
+    <main class="page-shell auth-shell">
+      <section class="page-intro">
+        <p class="eyebrow">Konto</p>
+        <h1>Melde dich an und sammle deine eigenen Rezepte.</h1>
+      </section>
+
+      <section class="auth-layout">
+        <form class="auth-form" id="loginForm">
+          <div class="panel-heading">
+            <p class="eyebrow">Anmelden</p>
+            <h2>Willkommen zurueck</h2>
+          </div>
+          <label>
+            E-Mail
+            <input name="email" type="email" autocomplete="email" required>
+          </label>
+          <label>
+            Passwort
+            <input name="password" type="password" autocomplete="current-password" required>
+          </label>
+          <button class="button primary" type="submit">Anmelden</button>
+        </form>
+
+        <form class="auth-form" id="signupForm">
+          <div class="panel-heading">
+            <p class="eyebrow">Registrieren</p>
+            <h2>Neues Konto</h2>
+          </div>
+          <label>
+            Name
+            <input name="name" autocomplete="name" required>
+          </label>
+          <label>
+            E-Mail
+            <input name="email" type="email" autocomplete="email" required>
+          </label>
+          <label>
+            Passwort
+            <input name="password" type="password" autocomplete="new-password" minlength="6" required>
+          </label>
+          <button class="button primary" type="submit">Registrieren</button>
+        </form>
+      </section>
+      <p class="form-message" id="authMessage" role="status"></p>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

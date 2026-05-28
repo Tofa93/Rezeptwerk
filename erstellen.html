@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kuechenkompass | Rezept erstellen</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Kuechenkompass Startseite">
+        <span class="brand-mark">K</span>
+        <span>Kuechenkompass</span>
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a href="index.html">Start</a>
+        <a href="suche.html">Rezeptsuche</a>
+        <a class="active" href="erstellen.html">Rezept erstellen</a>
+      </nav>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-intro">
+        <p class="eyebrow">Rezept erstellen</p>
+        <h1>Halte fest, was wieder auf den Tisch soll.</h1>
+      </section>
+
+      <section class="create-layout">
+        <form class="recipe-form" id="recipeForm">
+          <label>
+            Rezeptname
+            <input name="title" required placeholder="Zum Beispiel Zitronenrisotto">
+          </label>
+          <label>
+            Kurzbeschreibung
+            <textarea name="note" rows="3" placeholder="Was macht das Gericht besonders?"></textarea>
+          </label>
+          <div class="form-row">
+            <label>
+              Kategorie
+              <select name="category">
+                <option>Vegetarisch</option>
+                <option>Schnell</option>
+                <option>Familie</option>
+                <option>Meal Prep</option>
+              </select>
+            </label>
+            <label>
+              Dauer in Minuten
+              <input name="time" type="number" min="5" max="240" value="30" required>
+            </label>
+          </div>
+          <div class="form-row">
+            <label>
+              Portionen
+              <input name="servings" type="number" min="1" max="20" value="2" required>
+            </label>
+            <label>
+              Schwierigkeit
+              <select name="difficulty">
+                <option>Einfach</option>
+                <option>Mittel</option>
+                <option>Anspruchsvoll</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-row">
+            <label>
+              Vorbereitung in Minuten
+              <input name="prepTime" type="number" min="0" max="240" value="10">
+            </label>
+            <label>
+              Kochzeit in Minuten
+              <input name="cookTime" type="number" min="0" max="240" value="20">
+            </label>
+          </div>
+          <label>
+            Bild vom Gericht
+            <input name="image" type="file" accept="image/*">
+          </label>
+          <div class="image-preview" id="imagePreview" aria-live="polite">
+            <span>Noch kein Bild ausgewaehlt</span>
+          </div>
+          <label>
+            Zutaten
+            <textarea name="ingredients" rows="5" required placeholder="Eine Zutat pro Zeile"></textarea>
+          </label>
+          <label>
+            Zubereitung
+            <textarea name="steps" rows="7" required placeholder="Schritte kurz und klar notieren"></textarea>
+          </label>
+          <button class="button primary" type="submit">Rezept speichern</button>
+          <p class="form-message" id="formMessage" role="status"></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

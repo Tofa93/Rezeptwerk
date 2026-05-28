@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kuechenkompass | Start</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Kuechenkompass Startseite">
+        <span class="brand-mark">K</span>
+        <span>Kuechenkompass</span>
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a class="active" href="index.html">Start</a>
+        <a href="suche.html">Rezeptsuche</a>
+        <a href="erstellen.html">Rezept erstellen</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <img src="assets/hero-kitchen.png" alt="Kuechenarbeitsflaeche mit frischen Zutaten und Rezeptnotizen">
+        <div class="hero-copy">
+          <p class="eyebrow">Heute kochen</p>
+          <h1>Frische Ideen, klare Schritte, weniger Sucherei.</h1>
+          <p>Starte mit einem Tipp des Tages, finde passende Rezepte oder sammle deine eigenen Kuechenfavoriten.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="suche.html">Rezepte suchen</a>
+            <a class="button ghost" href="erstellen.html">Eigenes Rezept</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-wrap">
+        <div class="section-heading">
+          <p class="eyebrow">Tagestipps</p>
+          <h2>Schnell auf den Teller</h2>
+        </div>
+        <div class="tip-grid" id="dailyTips" aria-live="polite"></div>
+      </section>
+
+      <section class="feature-band">
+        <div>
+          <p class="eyebrow">Wo geht es weiter?</p>
+          <h2>Drei Wege durch deine Rezepte</h2>
+        </div>
+        <div class="feature-list">
+          <a href="index.html">
+            <strong>Startscreen</strong>
+            <span>Infos, Empfehlungen und saisonale Impulse.</span>
+          </a>
+          <a href="suche.html">
+            <strong>Rezeptsuche</strong>
+            <span>Filtern nach Zeit, Kategorie und Zutaten.</span>
+          </a>
+          <a href="erstellen.html">
+            <strong>Rezept erstellen</strong>
+            <span>Eigene Rezepte erfassen und lokal speichern.</span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
