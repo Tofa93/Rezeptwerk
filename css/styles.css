@@ -353,6 +353,16 @@ h2 {
   width: 100%;
 }
 
+.tip-card,
+.recipe-card,
+.saved-card,
+.auth-form,
+.recipe-form,
+.filters,
+.detail-card {
+  min-width: 0;
+}
+
 .tip-card h3 {
   margin: 0 0 10px;
 }
@@ -1019,6 +1029,52 @@ textarea {
   padding: clamp(20px, 4vw, 30px);
 }
 
+@media (max-width: 1080px) {
+  .search-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .recipe-grid,
+  .tip-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .detail-hero-layout {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.48fr);
+  }
+}
+
+@media (max-width: 920px) {
+  .site-header {
+    gap: 14px;
+    padding-inline: 18px;
+  }
+
+  .main-nav {
+    gap: 6px;
+  }
+
+  .main-nav a,
+  .nav-button {
+    padding-inline: 10px;
+  }
+
+  .recipe-builder {
+    grid-template-columns: 1fr;
+  }
+
+  .recipe-builder > .form-section,
+  .recipe-builder > .button,
+  .recipe-builder > .form-message {
+    grid-column: 1 / -1 !important;
+  }
+
+  .auth-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .ingredient-list,
 .step-list {
   margin: 0;
@@ -1051,15 +1107,17 @@ textarea {
   .section-wrap,
   .feature-band,
   .page-shell {
-    padding: 34px 14px;
+    padding: 32px 14px;
   }
 
   .page-intro {
     padding-bottom: 16px;
+    max-width: none;
   }
 
   .page-intro h1 {
-    font-size: clamp(2.2rem, 12vw, 3.4rem);
+    font-size: clamp(2rem, 11vw, 3.2rem);
+    overflow-wrap: anywhere;
   }
 
   .icon-button {
@@ -1071,6 +1129,7 @@ textarea {
     display: grid;
     gap: 12px;
     padding: 12px 14px;
+    position: relative;
   }
 
   .brand,
@@ -1090,6 +1149,11 @@ textarea {
     padding: 7px 10px;
   }
 
+  .main-nav > a {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
   .user-menu-button {
     display: flex;
     justify-content: space-between;
@@ -1104,7 +1168,7 @@ textarea {
   }
 
   .hero {
-    min-height: 620px;
+    min-height: min(620px, calc(100svh - 94px));
   }
 
   .hero::after {
@@ -1131,6 +1195,16 @@ textarea {
     padding: 16px;
   }
 
+  .recipe-grid,
+  .tip-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recipe-card-image {
+    aspect-ratio: 16 / 10;
+    margin-top: 0;
+  }
+
   .recipe-builder > .form-section,
   .recipe-builder > .button,
   .recipe-builder > .form-message {
@@ -1143,6 +1217,18 @@ textarea {
 
   .filter-chips {
     max-height: 190px;
+  }
+
+  .filter-chip {
+    flex: 0 1 auto;
+  }
+
+  .auth-shell {
+    max-width: none;
+  }
+
+  .auth-layout.single {
+    grid-template-columns: 1fr;
   }
 
   .difficulty-rating {
@@ -1169,9 +1255,45 @@ textarea {
     justify-content: center;
     width: 100%;
   }
+
+  .detail-hero {
+    margin-bottom: 20px;
+    padding-bottom: 22px;
+  }
+
+  .detail-hero h1 {
+    font-size: clamp(2rem, 11vw, 3.35rem);
+    overflow-wrap: anywhere;
+  }
+
+  .detail-image {
+    aspect-ratio: 16 / 10;
+  }
+
+  .ingredient-list,
+  .step-list {
+    padding-left: 18px;
+  }
 }
 
 @media (max-width: 520px) {
+  body {
+    font-size: 0.97rem;
+  }
+
+  .site-header {
+    padding: 10px 12px;
+  }
+
+  .brand {
+    font-size: 0.98rem;
+  }
+
+  .brand-mark {
+    height: 32px;
+    width: 32px;
+  }
+
   .hero-copy {
     padding: 42px 16px;
   }
@@ -1186,7 +1308,98 @@ textarea {
     width: 100%;
   }
 
+  .hero {
+    min-height: 560px;
+  }
+
+  .hero-copy p:not(.eyebrow) {
+    font-size: 1rem;
+  }
+
+  .section-wrap,
+  .feature-band,
+  .page-shell {
+    padding: 26px 10px;
+  }
+
+  .tip-card,
+  .recipe-card,
+  .saved-card,
+  .filters,
+  .recipe-form,
+  .auth-form,
+  .auth-required,
+  .detail-card {
+    padding: 14px;
+  }
+
+  .search-panel {
+    gap: 14px;
+  }
+
+  .filter-chips {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .filter-chip {
+    font-size: 0.84rem;
+    min-height: 36px;
+    padding: 7px 10px;
+  }
+
+  .category-tab,
+  .selected-category {
+    font-size: 0.84rem;
+  }
+
+  .difficulty-scale {
+    gap: 8px;
+  }
+
+  .difficulty-scale > span {
+    justify-self: start;
+  }
+
+  .difficulty-rating {
+    padding: 8px;
+  }
+
+  .difficulty-rating button {
+    height: 40px;
+  }
+
+  .image-preview {
+    aspect-ratio: 4 / 3;
+  }
+
   .tag-row {
     gap: 6px;
+  }
+
+  .tag {
+    font-size: 0.78rem;
+  }
+
+  .panel-heading {
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .main-nav a,
+  .nav-button {
+    font-size: 0.84rem;
+    padding: 6px 8px;
+  }
+
+  .page-intro h1,
+  h1 {
+    font-size: clamp(1.9rem, 13vw, 2.6rem);
+  }
+
+  .recipe-card-image,
+  .detail-image {
+    aspect-ratio: 1 / 1;
   }
 }
