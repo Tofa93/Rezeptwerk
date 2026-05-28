@@ -1,7 +1,7 @@
-const recipeImageBucket = "recipe-images";
+﻿const recipeImageBucket = "recipe-images";
 const categoryGroups = [
   {
-    title: "Ernaehrung",
+    title: "Ernährung",
     items: ["Vegan", "Vegetarisch", "Glutenfrei", "Laktosefrei", "Low Carb", "High Protein"]
   },
   {
@@ -75,7 +75,7 @@ function recipeDifficultyText(value) {
     Anspruchsvoll: 5
   };
   const number = labels[value] || toNumber(value, 1);
-  return `${number} ${number === 1 ? "Kompass" : "Kompasse"}`;
+  return `${number} ${number === 1 ? "Stufe" : "Stufen"}`;
 }
 
 function recipeDifficultyValue(value) {
@@ -85,6 +85,21 @@ function recipeDifficultyValue(value) {
     Anspruchsvoll: 5
   };
   return labels[value] || toNumber(value, 1);
+}
+
+function difficultyIcons(value) {
+  const count = Math.max(1, Math.min(5, recipeDifficultyValue(value)));
+  return `
+    <span class="difficulty-icons" aria-label="${count} ${count === 1 ? "Stufe" : "Stufen"}">
+      ${[1, 2, 3, 4, 5]
+        .map((item) => `<span class="material-symbols-outlined ${item <= count ? "active" : ""}" aria-hidden="true">star</span>`)
+        .join("")}
+    </span>
+  `;
+}
+
+function difficultyTag(value) {
+  return `<span class="tag difficulty-tag">${difficultyIcons(value)}</span>`;
 }
 
 function splitCategories(value) {
@@ -111,7 +126,7 @@ function readImageAsDataUrl(file) {
 function getSupabase() {
   if (supabaseClient) return supabaseClient;
 
-  const config = window.KUECHENKOMPASS_SUPABASE || {};
+  const config = window.REZEPTWERK_SUPABASE || window.KUECHENKOMPASS_SUPABASE || {};
   if (!window.supabase || !config.url || !config.anonKey || config.url.includes("DEIN-PROJEKT")) {
     return null;
   }
@@ -126,7 +141,7 @@ function showSupabaseMissing(target) {
     <section class="auth-required">
       <p class="eyebrow">Supabase verbinden</p>
       <h2>Trage zuerst deine Supabase-Zugangsdaten ein.</h2>
-      <p>Oeffne <strong>supabase-config.js</strong> und setze dort deine Project URL und den anon public key ein.</p>
+      <p>Öffne <strong>supabase-config.js</strong> und setze dort deine Project URL und den anon public key ein.</p>
     </section>
   `;
 }
@@ -231,7 +246,6 @@ async function getOwnRecipes() {
     .from("recipes")
     .select("*")
     .eq("user_id", user.id)
-    .eq("is_public", false)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -295,6 +309,7 @@ async function addSavedRecipe(recipe, imageFile) {
   const imageUrl = await uploadRecipeImage(imageFile, user.id);
   const { error } = await client.from("recipes").insert({
     user_id: user.id,
+    is_public: true,
     title: recipe.title,
     note: recipe.note,
     category: recipe.category,
@@ -330,11 +345,25 @@ async function updateSavedRecipe(recipeId, recipe, imageFile, currentImageUrl = 
       cook_time_minutes: recipe.cookTime,
       ingredients: recipe.ingredients,
       steps: recipe.steps,
-      image_url: imageUrl
+      image_url: imageUrl,
+      updated_at: new Date().toISOString()
     })
     .eq("id", recipeId)
-    .eq("user_id", user.id)
-    .eq("is_public", false);
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+async function deleteSavedRecipe(recipeId) {
+  const client = getSupabase();
+  const user = await getCurrentUser();
+  if (!client || !user) throw new Error("Bitte melde dich an, um Rezepte zu löschen.");
+
+  const { error } = await client
+    .from("recipes")
+    .delete()
+    .eq("id", recipeId)
+    .eq("user_id", user.id);
 
   if (error) throw error;
 }
@@ -368,10 +397,6 @@ function recipeCard(recipe) {
   const categoryTags = splitCategories(recipe.category)
     .map((item) => `<span class="tag">${escapeHtml(item)}</span>`)
     .join("");
-  const ingredientTags = recipe.ingredients
-    .slice(0, 0)
-    .map((item) => `<span class="tag">${escapeHtml(item)}</span>`)
-    .join("");
   const image = recipe.image
     ? `<img class="recipe-card-image" src="${recipe.image}" alt="${escapeHtml(recipe.title)}">`
     : "";
@@ -385,7 +410,7 @@ function recipeCard(recipe) {
         ${categoryTags}
         <span class="tag">${escapeHtml(recipe.time)} Min.</span>
         ${recipe.servings ? `<span class="tag">${escapeHtml(recipe.servings)} Portionen</span>` : ""}
-        ${ingredientTags}
+        ${difficultyTag(recipe.difficulty)}
       </div>
     </a>
   `;
@@ -429,7 +454,7 @@ function setupRecipeBuilder(form, recipe = {}) {
   const customCategoryInput = form.querySelector("[data-custom-category]");
   const addCategoryButton = form.querySelector("[data-add-category]");
   const difficultyInput = form.elements.difficulty;
-  const compassRating = form.querySelector("[data-compass-rating]");
+  const difficultyRating = form.querySelector("[data-difficulty-rating]");
   const prepInput = form.elements.prepTime;
   const cookInput = form.elements.cookTime;
   const totalTime = form.querySelector("[data-total-time]");
@@ -462,13 +487,13 @@ function setupRecipeBuilder(form, recipe = {}) {
       ` : ""
     ].join("");
     selectedCategories.innerHTML = `
-      <span>Ausgewaehlt</span>
+      <span>Ausgewählt</span>
       <div>
         ${activeCategories.length
           ? activeCategories
           .map((item) => `<button class="selected-category" data-selected-category="${escapeAttribute(item)}" type="button">${escapeHtml(item)} -</button>`)
           .join("")
-          : `<span class="selected-empty">Keine Kategorie ausgewaehlt</span>`}
+          : `<span class="selected-empty">Keine Kategorie ausgewählt</span>`}
       </div>
     `;
   };
@@ -483,8 +508,8 @@ function setupRecipeBuilder(form, recipe = {}) {
   const setDifficulty = (difficulty) => {
     const value = String(Math.max(1, Math.min(5, recipeDifficultyValue(difficulty))));
     difficultyInput.value = value;
-    compassRating.innerHTML = [1, 2, 3, 4, 5]
-      .map((item) => `<button class="${item <= Number(value) ? "active" : ""}" data-difficulty="${item}" type="button" aria-label="${item} ${item === 1 ? "Kompass" : "Kompasse"}"><span class="material-symbols-outlined" aria-hidden="true">explore</span></button>`)
+    difficultyRating.innerHTML = [1, 2, 3, 4, 5]
+      .map((item) => `<button class="${item <= Number(value) ? "active" : ""}" data-difficulty="${item}" type="button" aria-label="${item} ${item === 1 ? "Stufe" : "Stufen"}"><span class="material-symbols-outlined" aria-hidden="true">star</span></button>`)
       .join("");
   };
 
@@ -529,7 +554,7 @@ function setupRecipeBuilder(form, recipe = {}) {
     renderCategories();
   });
 
-  compassRating.addEventListener("click", (event) => {
+  difficultyRating.addEventListener("click", (event) => {
     const button = event.target.closest("[data-difficulty]");
     if (button) setDifficulty(button.dataset.difficulty);
   });
@@ -579,10 +604,12 @@ function myRecipeCard(recipe) {
         ${splitCategories(recipe.category).map((item) => `<span class="tag">${escapeHtml(item)}</span>`).join("")}
         <span class="tag">${escapeHtml(recipe.time)} Min.</span>
         ${recipe.servings ? `<span class="tag">${escapeHtml(recipe.servings)} Portionen</span>` : ""}
+        ${difficultyTag(recipe.difficulty)}
       </div>
       <div class="card-actions">
         <a class="text-button" href="${recipeUrl(recipe)}">Ansehen</a>
         <a class="text-button" href="bearbeiten.html?id=${encodeURIComponent(recipe.id)}">Bearbeiten</a>
+        <button class="text-button danger" data-delete-recipe="${escapeAttribute(recipe.id)}" type="button">Löschen</button>
       </div>
     </article>
   `;
@@ -656,11 +683,12 @@ async function renderDailyTips() {
       <a class="tip-card" href="${recipeUrl(recipe)}">
         <strong>${index === 0 ? "Tipp des Tages" : "Auch gut heute"}</strong>
         <h3>${escapeHtml(recipe.title)}</h3>
-        <p>${escapeHtml(recipe.note || "Aus deiner eigenen Sammlung, bereit fuer den naechsten Kochabend.")}</p>
+        <p>${escapeHtml(recipe.note || "Aus deiner eigenen Sammlung, bereit für den nächsten Kochabend.")}</p>
         <div class="tag-row">
-          <span class="tag">${escapeHtml(recipe.category)}</span>
+          ${splitCategories(recipe.category).map((item) => `<span class="tag">${escapeHtml(item)}</span>`).join("")}
           <span class="tag">${escapeHtml(recipe.time)} Min.</span>
           ${recipe.servings ? `<span class="tag">${escapeHtml(recipe.servings)} Portionen</span>` : ""}
+          ${difficultyTag(recipe.difficulty)}
         </div>
       </a>
     `)
@@ -674,13 +702,33 @@ async function renderSearch() {
   const searchInput = document.querySelector("#searchInput");
   const categoryFilter = document.querySelector("#categoryFilter");
   const timeFilter = document.querySelector("#timeFilter");
+  const difficultyFilter = document.querySelector("#difficultyFilter");
   const count = document.querySelector("#resultCount");
   const recipes = await allRecipes();
+  const filterState = {
+    category: "alle",
+    time: 999,
+    difficulty: "alle"
+  };
+
+  const categoryOptions = [
+    "alle",
+    ...new Set([
+      ...defaultCategories,
+      ...recipes.flatMap((recipe) => splitCategories(recipe.category))
+    ].filter(Boolean))
+  ];
+
+  categoryFilter.innerHTML = categoryOptions
+    .map((category, index) => `
+      <button class="filter-chip ${index === 0 ? "active" : ""}" data-category-filter="${escapeAttribute(category)}" type="button">
+        ${index === 0 ? "Alle" : escapeHtml(category)}
+      </button>
+    `)
+    .join("");
 
   const applyFilters = () => {
     const query = searchInput.value.trim().toLowerCase();
-    const category = categoryFilter.value;
-    const maxTime = Number(timeFilter.value);
 
     const filtered = recipes.filter((recipe) => {
       const haystack = [
@@ -692,9 +740,10 @@ async function renderSearch() {
         ...recipe.ingredients
       ].join(" ").toLowerCase();
       const matchesQuery = !query || haystack.includes(query);
-      const matchesCategory = category === "alle" || splitCategories(recipe.category).includes(category);
-      const matchesTime = recipe.time <= maxTime;
-      return matchesQuery && matchesCategory && matchesTime;
+      const matchesCategory = filterState.category === "alle" || splitCategories(recipe.category).includes(filterState.category);
+      const matchesTime = recipe.time <= filterState.time;
+      const matchesDifficulty = filterState.difficulty === "alle" || recipeDifficultyValue(recipe.difficulty) === Number(filterState.difficulty);
+      return matchesQuery && matchesCategory && matchesTime && matchesDifficulty;
     });
 
     count.textContent = `${filtered.length} ${filtered.length === 1 ? "Rezept" : "Rezepte"}`;
@@ -703,11 +752,36 @@ async function renderSearch() {
       : `<p class="empty-state">Keine Treffer. Probiere eine andere Zutat oder lockere die Filter.</p>`;
   };
 
-  [searchInput, categoryFilter, timeFilter].forEach((field) => field.addEventListener("input", applyFilters));
+  searchInput.addEventListener("input", applyFilters);
+  categoryFilter.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-category-filter]");
+    if (!button) return;
+    filterState.category = button.dataset.categoryFilter;
+    categoryFilter.querySelectorAll("[data-category-filter]").forEach((item) => item.classList.toggle("active", item === button));
+    applyFilters();
+  });
+  timeFilter.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-time-filter]");
+    if (!button) return;
+    filterState.time = Number(button.dataset.timeFilter);
+    timeFilter.querySelectorAll("[data-time-filter]").forEach((item) => item.classList.toggle("active", item === button));
+    applyFilters();
+  });
+  difficultyFilter.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-difficulty-filter]");
+    if (!button) return;
+    filterState.difficulty = button.dataset.difficultyFilter;
+    difficultyFilter.querySelectorAll("[data-difficulty-filter]").forEach((item) => item.classList.toggle("active", item === button));
+    applyFilters();
+  });
   document.querySelector("#resetFilters").addEventListener("click", () => {
     searchInput.value = "";
-    categoryFilter.value = "alle";
-    timeFilter.value = "999";
+    filterState.category = "alle";
+    filterState.time = 999;
+    filterState.difficulty = "alle";
+    categoryFilter.querySelectorAll("[data-category-filter]").forEach((item) => item.classList.toggle("active", item.dataset.categoryFilter === "alle"));
+    timeFilter.querySelectorAll("[data-time-filter]").forEach((item) => item.classList.toggle("active", item.dataset.timeFilter === "999"));
+    difficultyFilter.querySelectorAll("[data-difficulty-filter]").forEach((item) => item.classList.toggle("active", item.dataset.difficultyFilter === "alle"));
     applyFilters();
   });
   applyFilters();
@@ -728,7 +802,7 @@ async function setupRecipeForm() {
       <section class="auth-required">
         <p class="eyebrow">Anmeldung erforderlich</p>
         <h2>Melde dich an, um eigene Rezepte zu speichern.</h2>
-        <p>So bleiben deine Rezepte deiner Sammlung zugeordnet und sind auf deinen Geraeten verfuegbar.</p>
+        <p>So bleiben deine Rezepte deiner Sammlung zugeordnet und sind auf deinen Geräten verfügbar.</p>
         <a class="button primary" href="auth.html">Anmelden oder registrieren</a>
       </section>
     `;
@@ -738,7 +812,7 @@ async function setupRecipeForm() {
   const imageInput = form.elements.image;
   const preview = document.querySelector("#imagePreview");
   setupRecipeBuilder(form, {
-    category: "Vegetarisch",
+    category: "",
     difficulty: 1,
     prepTime: 10,
     cookTime: 20,
@@ -764,7 +838,7 @@ async function setupRecipeForm() {
 
       const image = await readImageAsDataUrl(file);
       preview.hidden = false;
-      preview.innerHTML = `<img src="${image}" alt="Vorschau des ausgewaehlten Gerichts">`;
+      preview.innerHTML = `<img src="${image}" alt="Vorschau des ausgewählten Gerichts">`;
     });
   }
 
@@ -803,8 +877,8 @@ function recipeFromForm(form) {
     })
     .filter(Boolean);
 
-  if (!ingredients.length) throw new Error("Bitte fuege mindestens eine Zutat hinzu.");
-  if (!steps) throw new Error("Bitte fuege mindestens einen Zubereitungsschritt hinzu.");
+  if (!ingredients.length) throw new Error("Bitte füge mindestens eine Zutat hinzu.");
+  if (!steps) throw new Error("Bitte füge mindestens einen Zubereitungsschritt hinzu.");
 
   return {
     title,
@@ -824,38 +898,42 @@ function setupAuthForms() {
   const loginForm = document.querySelector("#loginForm");
   const signupForm = document.querySelector("#signupForm");
   const message = document.querySelector("#authMessage");
-  if (!loginForm || !signupForm) return;
+  if (!loginForm && !signupForm) return;
 
   if (!getSupabase()) {
     message.textContent = "Bitte trage zuerst deine Supabase-Zugangsdaten in supabase-config.js ein.";
-    loginForm.querySelector("button").disabled = true;
-    signupForm.querySelector("button").disabled = true;
+    loginForm?.querySelector("button").setAttribute("disabled", "");
+    signupForm?.querySelector("button").setAttribute("disabled", "");
     return;
   }
 
-  loginForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const data = new FormData(loginForm);
-    try {
-      message.textContent = "Anmeldung laeuft...";
-      await loginUser(data.get("email"), data.get("password"));
-      window.location.href = "erstellen.html";
-    } catch (error) {
-      message.textContent = error.message || "Anmeldung fehlgeschlagen.";
-    }
-  });
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const data = new FormData(loginForm);
+      try {
+        message.textContent = "Anmeldung läuft...";
+        await loginUser(data.get("email"), data.get("password"));
+        window.location.href = "index.html";
+      } catch (error) {
+        message.textContent = error.message || "Anmeldung fehlgeschlagen.";
+      }
+    });
+  }
 
-  signupForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const data = new FormData(signupForm);
-    try {
-      message.textContent = "Konto wird erstellt...";
-      await signUpUser(data.get("name"), data.get("email"), data.get("password"));
-      window.location.href = "erstellen.html";
-    } catch (error) {
-      message.textContent = error.message || "Registrierung fehlgeschlagen.";
-    }
-  });
+  if (signupForm) {
+    signupForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const data = new FormData(signupForm);
+      try {
+        message.textContent = "Konto wird erstellt...";
+        await signUpUser(data.get("name"), data.get("email"), data.get("password"));
+        window.location.href = "index.html";
+      } catch (error) {
+        message.textContent = error.message || "Registrierung fehlgeschlagen.";
+      }
+    });
+  }
 }
 
 async function renderMyRecipes() {
@@ -883,6 +961,21 @@ async function renderMyRecipes() {
   container.innerHTML = recipes.length
     ? recipes.map(myRecipeCard).join("")
     : `<p class="empty-state">Du hast noch keine eigenen Rezepte erstellt.</p>`;
+
+  container.onclick = async (event) => {
+    const button = event.target.closest("[data-delete-recipe]");
+    if (!button) return;
+
+    if (!window.confirm("Dieses Rezept wirklich löschen?")) return;
+    button.disabled = true;
+    try {
+      await deleteSavedRecipe(button.dataset.deleteRecipe);
+      await renderMyRecipes();
+    } catch (error) {
+      button.disabled = false;
+      alert(error.message || "Das Rezept konnte nicht gelöscht werden.");
+    }
+  };
 }
 
 async function renderFavorites() {
@@ -977,14 +1070,14 @@ async function setupEditRecipeForm() {
 
       const image = await readImageAsDataUrl(file);
       preview.hidden = false;
-      preview.innerHTML = `<img src="${image}" alt="Vorschau des ausgewaehlten Gerichts">`;
+      preview.innerHTML = `<img src="${image}" alt="Vorschau des ausgewählten Gerichts">`;
     });
   }
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
-      message.textContent = "Aenderungen werden gespeichert...";
+      message.textContent = "Änderungen werden gespeichert...";
       await updateSavedRecipe(recipe.id, recipeFromForm(form), new FormData(form).get("image"), recipe.image);
       message.textContent = "Gespeichert.";
     } catch (error) {
@@ -1005,7 +1098,7 @@ async function renderRecipeDetail() {
       <section class="detail-card">
         <p class="eyebrow">Nicht gefunden</p>
         <h1>Dieses Rezept gibt es hier noch nicht.</h1>
-        <p class="detail-note">Gehe zur Suche zurueck und waehle ein anderes Rezept aus.</p>
+        <p class="detail-note">Gehe zur Suche zurück und wähle ein anderes Rezept aus.</p>
         <a class="button primary" href="suche.html">Zur Rezeptsuche</a>
       </section>
     `;
@@ -1026,14 +1119,13 @@ async function renderRecipeDetail() {
     : "";
   const prepDetails = [
     recipe.prepTime ? `${recipe.prepTime} Min. Vorbereitung` : "",
-    recipe.cookTime ? `${recipe.cookTime} Min. Kochzeit` : "",
-    recipeDifficultyText(recipe.difficulty)
+    recipe.cookTime ? `${recipe.cookTime} Min. Kochzeit` : ""
   ].filter(Boolean);
 
-  document.title = `${recipe.title} | Kuechenkompass`;
+  document.title = `${recipe.title} | Rezeptwerk`;
   container.innerHTML = `
     <section class="detail-hero">
-      <a class="back-link" href="suche.html">Zurueck zur Suche</a>
+      <a class="back-link" href="suche.html">Zurück zur Suche</a>
       <div class="detail-hero-layout">
         <div>
           <p class="eyebrow">${escapeHtml(recipe.category || "Rezept")}</p>
@@ -1044,6 +1136,7 @@ async function renderRecipeDetail() {
             <span class="tag">${escapeHtml(recipe.ingredients.length)} Zutaten</span>
             ${recipe.servings ? `<span class="tag">${escapeHtml(recipe.servings)} Portionen</span>` : ""}
             ${prepDetails.map((item) => `<span class="tag">${escapeHtml(item)}</span>`).join("")}
+            ${difficultyTag(recipe.difficulty)}
           </div>
         </div>
         ${detailImage}
@@ -1076,19 +1169,35 @@ async function setupRecipeActions(recipe) {
 
   const favoriteIds = await getFavoriteRecipeIds();
   const isFavorite = favoriteIds.includes(recipe.id);
-  const canEdit = recipe.userId === user.id && !recipe.isPublic;
+  const canEdit = recipe.userId === user.id;
 
   container.innerHTML = `
     <button class="button ${isFavorite ? "ghost" : "primary"}" id="favoriteButton" type="button">
       ${isFavorite ? "Aus Favoriten entfernen" : "Zu Favoriten"}
     </button>
     ${canEdit ? `<a class="button ghost" href="bearbeiten.html?id=${encodeURIComponent(recipe.id)}">Rezept bearbeiten</a>` : ""}
+    ${canEdit ? `<button class="button danger" id="deleteRecipeButton" type="button">Rezept löschen</button>` : ""}
   `;
 
   document.querySelector("#favoriteButton").addEventListener("click", async () => {
     await toggleFavorite(recipe.id, !isFavorite);
     setupRecipeActions(recipe);
   });
+
+  const deleteButton = document.querySelector("#deleteRecipeButton");
+  if (deleteButton) {
+    deleteButton.addEventListener("click", async () => {
+      if (!window.confirm("Dieses Rezept wirklich löschen?")) return;
+      deleteButton.disabled = true;
+      try {
+        await deleteSavedRecipe(recipe.id);
+        window.location.href = "meine-rezepte.html";
+      } catch (error) {
+        deleteButton.disabled = false;
+        alert(error.message || "Das Rezept konnte nicht gelöscht werden.");
+      }
+    });
+  }
 }
 
 renderDailyTips();

@@ -1,10 +1,10 @@
 create table if not exists public.recipes (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade,
-  is_public boolean not null default false,
+  is_public boolean not null default true,
   title text not null,
   note text,
-  category text not null,
+  category text not null default '',
   time_minutes integer not null default 0,
   servings integer not null default 1,
   difficulty text not null default 'Einfach',
@@ -13,12 +13,19 @@ create table if not exists public.recipes (
   ingredients text[] not null default '{}',
   steps text not null,
   image_url text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 alter table public.recipes alter column user_id drop not null;
-alter table public.recipes add column if not exists is_public boolean not null default false;
+alter table public.recipes add column if not exists is_public boolean not null default true;
+alter table public.recipes alter column is_public set default true;
+alter table public.recipes alter column category set default '';
+alter table public.recipes add column if not exists updated_at timestamptz not null default now();
 alter table public.recipes enable row level security;
+
+create index if not exists recipes_user_id_idx on public.recipes(user_id);
+create index if not exists recipes_public_created_idx on public.recipes(is_public, created_at desc);
 
 drop policy if exists "Users can read their own recipes" on public.recipes;
 drop policy if exists "Users can read visible recipes" on public.recipes;
@@ -31,20 +38,20 @@ drop policy if exists "Users can create their own recipes" on public.recipes;
 create policy "Users can create their own recipes"
   on public.recipes
   for insert
-  with check (auth.uid() = user_id and is_public = false);
+  with check (auth.uid() = user_id);
 
 drop policy if exists "Users can update their own recipes" on public.recipes;
 create policy "Users can update their own recipes"
   on public.recipes
   for update
-  using (auth.uid() = user_id and is_public = false)
-  with check (auth.uid() = user_id and is_public = false);
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 drop policy if exists "Users can delete their own recipes" on public.recipes;
 create policy "Users can delete their own recipes"
   on public.recipes
   for delete
-  using (auth.uid() = user_id and is_public = false);
+  using (auth.uid() = user_id);
 
 create table if not exists public.recipe_favorites (
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -54,6 +61,9 @@ create table if not exists public.recipe_favorites (
 );
 
 alter table public.recipe_favorites enable row level security;
+
+create index if not exists recipe_favorites_recipe_id_idx on public.recipe_favorites(recipe_id);
+create index if not exists recipe_favorites_created_idx on public.recipe_favorites(user_id, created_at desc);
 
 drop policy if exists "Users can read their favorites" on public.recipe_favorites;
 create policy "Users can read their favorites"
@@ -92,8 +102,8 @@ insert into public.recipes (
     '11111111-1111-4111-8111-111111111111',
     null,
     true,
-    'Gruene Pasta mit Zitrone',
-    'Frisch, cremig und gut fuer volle Wochentage.',
+    'Grüne Pasta mit Zitrone',
+    'Frisch, cremig und gut für volle Wochentage.',
     'Schnell',
     22,
     2,
@@ -107,7 +117,7 @@ insert into public.recipes (
     '22222222-2222-4222-8222-222222222222',
     null,
     true,
-    'Ofengemuese mit Feta',
+    'Ofengemüse mit Feta',
     'Ein Blech, wenig Abwasch, viel Farbe.',
     'Vegetarisch',
     40,
@@ -115,23 +125,23 @@ insert into public.recipes (
     'Einfach',
     15,
     25,
-    array['Suesskartoffel', 'Paprika', 'Feta', 'Kichererbsen'],
-    'Gemuese grob schneiden und mit Oel, Salz und Gewuerzen mischen. Auf einem Blech backen, Feta am Ende darueber broeseln.'
+    array['Süßkartoffel', 'Paprika', 'Feta', 'Kichererbsen'],
+    'Gemüse grob schneiden und mit Öl, Salz und Gewürzen mischen. Auf einem Blech backen, Feta am Ende darüber bröseln.'
   ),
   (
     '33333333-3333-4333-8333-333333333333',
     null,
     true,
-    'Tomatenreis fuer alle',
-    'Mild, saettigend und gut vorzubereiten.',
+    'Tomatenreis für alle',
+    'Mild, sättigend und gut vorzubereiten.',
     'Familie',
     35,
     4,
     'Einfach',
     10,
     25,
-    array['Reis', 'Tomaten', 'Erbsen', 'Kraeuter'],
-    'Reis mit Tomaten und Bruehe garen. Erbsen kurz vor Ende zugeben. Mit frischen Kraeutern und etwas Oel servieren.'
+    array['Reis', 'Tomaten', 'Erbsen', 'Kräuter'],
+    'Reis mit Tomaten und Brühe garen. Erbsen kurz vor Ende zugeben. Mit frischen Kräutern und etwas Öl servieren.'
   ),
   (
     '44444444-4444-4444-8444-444444444444',
@@ -146,7 +156,7 @@ insert into public.recipes (
     12,
     6,
     array['Couscous', 'Gurke', 'Tomate', 'Joghurt'],
-    'Couscous quellen lassen. Gemuese wuerfeln. Joghurt mit Salz, Zitrone und Kraeutern verruehren. Alles in Boxen schichten.'
+    'Couscous quellen lassen. Gemüse würfeln. Joghurt mit Salz, Zitrone und Kräutern verrühren. Alles in Boxen schichten.'
   ),
   (
     '55555555-5555-4555-8555-555555555555',
@@ -161,14 +171,14 @@ insert into public.recipes (
     15,
     30,
     array['Kartoffeln', 'Champignons', 'Zwiebeln', 'Petersilie'],
-    'Kartoffeln vorkochen und anbraten. Pilze und Zwiebeln separat kraeftig roesten. Zusammenfuehren und mit Petersilie abschliessen.'
+    'Kartoffeln vorkochen und anbraten. Pilze und Zwiebeln separat kräftig rösten. Zusammenführen und mit Petersilie abschließen.'
   ),
   (
     '66666666-6666-4666-8666-666666666666',
     null,
     true,
     'Schnelle Linsensuppe',
-    'Waermend und in einem Topf fertig.',
+    'Wärmend und in einem Topf fertig.',
     'Schnell',
     28,
     3,
@@ -176,7 +186,7 @@ insert into public.recipes (
     8,
     20,
     array['Rote Linsen', 'Karotte', 'Kokosmilch', 'Curry'],
-    'Karotte anschwitzen, Linsen und Curry zugeben. Mit Bruehe garen, Kokosmilch einruehren und cremig abschmecken.'
+    'Karotte anschwitzen, Linsen und Curry zugeben. Mit Brühe garen, Kokosmilch einrühren und cremig abschmecken.'
   )
 on conflict (id) do update set
   is_public = excluded.is_public,
